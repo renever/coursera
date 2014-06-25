@@ -36,8 +36,10 @@ def clean_filename(s, minimal_change=False):
     s = re.sub(r"\([^\(]*$", '', s)
     s = s.replace('nbsp', '')
     s = s.strip().replace(' ', '_')
-    valid_chars = '-_.()%s%s' % (string.ascii_letters, string.digits)
-    return ''.join(c for c in s if c in valid_chars)
+    s = s.replace('?','')
+    return s
+    #valid_chars = '-_.()%s%s' % (string.ascii_letters, string.digits)
+    #return ''.join(c for c in s if c in valid_chars)
 
 
 def get_anchor_format(a):

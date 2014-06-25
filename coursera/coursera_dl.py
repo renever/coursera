@@ -755,6 +755,8 @@ def main():
     """
     Main entry point for execution as a program (instead of as a module).
     """
+    reload(sys)
+    sys.setdefaultencoding("utf-8")    
 
     args = parseArgs()
     completed_classes = []

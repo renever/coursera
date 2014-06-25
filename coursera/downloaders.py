@@ -229,7 +229,7 @@ class DownloadProgress(object):
             return '--%'
         percentage = int(float(self._current) / float(self._total) * 100.0)
         done = int(percentage/2)
-        return '[{0: <50}] {1}%'.format(done * '#', percentage)
+        return '[{0: <50}] {1}%'.format(done * '>', percentage)
 
     def calc_speed(self):
         dif = self._now - self._start
@@ -245,12 +245,12 @@ class DownloadProgress(object):
         speed = self.calc_speed()
         total_speed_report = '{0} at {1}'.format(total, speed)
 
-        report = '\r{0: <56} {1: >30}'.format(percent, total_speed_report)
+        report = '\r{0: <56} {1: >20}'.format(percent, total_speed_report)
 
         if self._finished:
             print(report)
         else:
-            print(report, end="")
+            print(report, end="\r")
         sys.stdout.flush()
 
 
@@ -291,7 +291,7 @@ class NativeDownloader(Downloader):
 
             content_length = r.headers.get('content-length')
             progress = DownloadProgress(content_length)
-            chunk_sz = 1048576
+            chunk_sz = 262144 #1048576
             with open(filename, 'wb') as f:
                 progress.start()
                 while True:
