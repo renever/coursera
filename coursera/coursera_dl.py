@@ -372,6 +372,12 @@ def download_lectures(downloader,
                                           resource_filter, r[1])
                             continue
                         resources_to_get.append((fmt, r[0], r[1]))
+
+                        if re.search(u'en&format=srt',r[0]):
+                            chn_subtitle_link = r[0].replace(u'en&format=srt',u'zh&format=srt')
+                            chn_sub_exists = downloader.session.get(chn_subtitle_link,stream=True)
+                            if chn_sub_exists.status_code is 200:
+                                resources_to_get.append((fmt, chn_subtitle_link, r[1]))
                 else:
                     logging.debug(
                         'Skipping b/c format %s not in %s', fmt, file_formats)
@@ -386,6 +392,10 @@ def download_lectures(downloader,
                 else:
                     lecfn = os.path.join(
                         sec, format_resource(lecnum + 1, lecname, title, fmt))
+                    if(re.search(u'en&format=srt',url)):
+                        lecfn = lecfn.replace(u'.srt', u'.en.srt')
+                    elif(re.search(u'zh&format=srt',url)):
+                        lecfn = lecfn.replace(u'.srt', u'.chn.srt')
 
                 if overwrite or not os.path.exists(lecfn):
                     if not skip_download:
