@@ -97,7 +97,7 @@ def get_syllabus_url(class_name, preview):
     preview or if we are enrolled in the course.
     """
     class_type = 'preview' if preview else 'index'
-    page = CLASS_URL.format(class_name=class_name) + '/lecture/' + class_type
+    page = CLASS_URL.format(class_name=class_name) + '/lecture' # /' + class_type
     logging.debug('Using %s mode with page: %s', class_type, page)
 
     return page
@@ -738,6 +738,9 @@ def download_class(args, class_name):
             username=args.username, password=args.password
         )
         session.cookie_values = make_cookie_values(session.cookies, class_name)
+
+    session.headers['Cookie'] = session.cookie_values
+    session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'
 
     # get the syllabus listing
     page = get_syllabus(session, class_name, args.local_page, args.preview)

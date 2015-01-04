@@ -221,8 +221,9 @@ def make_cookie_values(cj, class_name):
 
     cookies = [c.name + '=' + c.value
                for c in cj
-               if c.domain == "class.coursera.org"
-               and c.path == path]
+               # if c.domain == "class.coursera.org"
+               # and c.path == path
+               ]
 
     return '; '.join(cookies)
 
