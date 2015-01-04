@@ -224,9 +224,16 @@ class DownloadProgress(object):
         self._current += bytes
         self.report_progress()
 
+    def report(self, bytes):
+        self._now = time.time()
+        self._current = bytes
+        self.report_progress()
+
     def calc_percent(self):
         if self._total is None:
             return '--%'
+        if self._total == 0:
+            return '100% done'
         percentage = int(float(self._current) / float(self._total) * 100.0)
         done = int(percentage/2)
         return '[{0: <50}] {1}%'.format(done * '>', percentage)
@@ -295,11 +302,11 @@ class NativeDownloader(Downloader):
             with open(filename, 'wb') as f:
                 progress.start()
                 while True:
-                    data = r.raw.read(chunk_sz)
+                    data = r.raw.read(chunk_sz, decode_content=True)
                     if not data:
                         progress.stop()
                         break
-                    progress.read(len(data))
+                    progress.report(r.raw.tell())
                     f.write(data)
             r.close()
             return True

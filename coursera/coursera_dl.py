@@ -16,7 +16,7 @@ For further documentation and examples, visit the project's home at:
 
 Authors and copyright:
     © 2012-2013, John Lehmann (first last at geemail dotcom or @jplehmann)
-    © 2012-2013, Rogério Brito (r lastname at ime usp br)
+    © 2012-2014, Rogério Brito (r lastname at ime usp br)
     © 2013, Jonas De Taeye (first dt at fastmail fm)
 
 Contributions are welcome, but please add new unit tests to test your changes
@@ -38,6 +38,7 @@ Legalese:
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+
 
 import argparse
 import datetime
@@ -75,6 +76,7 @@ from .credentials import get_credentials, CredentialsError
 from .define import CLASS_URL, ABOUT_URL, PATH_CACHE
 from .downloaders import get_downloader
 from .utils import clean_filename, get_anchor_format, mkdir_p, fix_url
+from .utils import decode_input
 
 # URL containing information about outdated modules
 _see_url = " See https://github.com/coursera-dl/coursera/issues/139"
@@ -84,7 +86,7 @@ _see_url = " See https://github.com/coursera-dl/coursera/issues/139"
 import bs4
 import six
 
-assert V(requests.__version__) >= V('1.2'), "Upgrade requests!" + _see_url
+assert V(requests.__version__) >= V('2.2.1'), "Upgrade requests!" + _see_url
 assert V(six.__version__) >= V('1.3'), "Upgrade six!" + _see_url
 assert V(bs4.__version__) >= V('4.1'), "Upgrade bs4!" + _see_url
 
@@ -255,7 +257,7 @@ def parse_syllabus(session, page, reverse=False, intact_fnames=False):
             for fmt in lecture:
                 count = len(lecture[fmt])
                 for i, r in enumerate(lecture[fmt]):
-                    if (count == i + 1):
+                    if count == i + 1:
                         # for backward compatibility, we do not add the title
                         # to the filename (format_combine_number_resource and
                         # format_resource)
@@ -299,11 +301,15 @@ def download_about(session, class_name, path='', overwrite=False):
     # NOTE: should we create a directory with metadata?
     logging.info('Downloading about page from: %s', about_url)
     about_json = get_page(session, about_url)
-    data = json.loads(about_json)
+    data = json.loads(about_json)["elements"]
 
-    with open(about_fn, 'w') as about_file:
-        json_data = json.dumps(data, indent=4, separators=(',', ':'))
-        about_file.write(json_data)
+    for element in data:
+        if element["shortName"] == base_class_name:
+            with open(about_fn, 'w') as about_file:
+                json_data = json.dumps(element, indent=4,
+                                       separators=(',', ':'))
+                about_file.write(json_data)
+            break
 
 
 def download_lectures(downloader,
@@ -350,6 +356,7 @@ def download_lectures(downloader,
             logging.debug('Skipping b/c of sf: %s %s', section_filter,
                           section)
             continue
+
         sec = os.path.join(path, class_name, format_section(secnum + 1,
                                                             section))
         for (lecnum, (lecname, lecture)) in enumerate(lectures):
@@ -450,10 +457,10 @@ def total_seconds(td):
     Added for backward compatibility, pre 2.7.
     """
     return (td.microseconds +
-           (td.seconds + td.days * 24 * 3600) * 10**6) // 10**6
+            (td.seconds + td.days * 24 * 3600) * 10**6) // 10**6
 
 
-def parseArgs():
+def parseArgs(args=None):
     """
     Parse the arguments/options passed to the program on the command line.
     """
@@ -667,7 +674,8 @@ def parseArgs():
                         default=False,
                         help='Do not limit filenames to be ASCII-only')
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
+
 
     # Initialize the logging system first so that other functions
     # can use it right away
@@ -683,6 +691,10 @@ def parseArgs():
 
     # turn list of strings into list
     args.file_formats = args.file_formats.split()
+
+    # decode path so we can work properly with cyrillic symbols on different
+    # versions on Python
+    args.path = decode_input(args.path)
 
     for bin in ['wget_bin', 'curl_bin', 'aria2_bin', 'axel_bin']:
         if getattr(args, bin):
